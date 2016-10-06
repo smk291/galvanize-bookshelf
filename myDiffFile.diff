@@ -1,0 +1,928 @@
+diff --git a/1_migrations_seeds.md b/1_migrations_seeds.md
+index 28790b0..bc3b818 100644
+--- a/1_migrations_seeds.md
++++ b/1_migrations_seeds.md
+@@ -31,10 +31,10 @@ And, update the `knexfile.js` file with the following connection information for
+ 'postgres://localhost/bookshelf_test'
+ ```
+ 
+-Then, generate a secret key that'll be used to sign session information. You'll learn what a session is and why it's signed in an upcoming lesson.
++Then, generate a secret key that'll be used to sign JWT information. You'll learn what a JWT is and why it's signed in an upcoming lesson.
+ 
+ ```shell
+-bash -c 'echo "SESSION_SECRET="$(openssl rand -hex 64)' > .env
++bash -c 'echo "JWT_SECRET="$(openssl rand -hex 64)' > .env
+ ```
+ 
+ Finally, ensure the test suite can connect to the right database.
+diff --git a/4_authentication_authorization.md b/4_authentication_authorization.md
+index c721c8e..68b7fdc 100644
+--- a/4_authentication_authorization.md
++++ b/4_authentication_authorization.md
+@@ -36,33 +36,33 @@ npm test test/part4.seeds.test.js
+ 
+ ## Authentication
+ 
+-In the `routes/session.js` module, add middleware to handle the following HTTP requests and send back the associated HTTP response. The information in both the request body and response body use the `application/json` content type.
++In the `routes/token.js` module, add middleware to handle the following HTTP requests and send back the associated HTTP response. The information in both the request body and response body use the `application/json` content type.
+ 
+ | Request Method | Request URL        | Request Body                                                     | Response Status | Response Body                                    |
+ |----------------|--------------------|------------------------------------------------------------------|-----------------|--------------------------------------------------|
+-| `GET`          | `/session`         | N/A                                                              | `200`           | `false`                                          |
+-| `POST`         | `/session`         | `{ "email": "jkrowling@gmail.com", "password": "youreawizard" }` | `200`           | `{ id: 1, "email": "jkrowling@gmail.com", ... }` |
+-| `GET`          | `/session`         | N/A                                                              | `200`           | `true`                                           |
+-| `DELETE`       | `/session`         | N/A                                                              | `200`           | `true`                                           |
++| `GET`          | `/token`         | N/A                                                              | `200`           | `false`                                          |
++| `POST`         | `/token`         | `{ "email": "jkrowling@gmail.com", "password": "youreawizard" }` | `200`           | `{ id: 1, "email": "jkrowling@gmail.com", ... }` |
++| `GET`          | `/token`         | N/A                                                              | `200`           | `true`                                           |
++| `DELETE`       | `/token`         | N/A                                                              | `200`           | `true`                                           |
+ 
+-**NOTE:** The second `GET /session` request assumes a session was created by the previous `POST /session` request. Also, don't send the user's password or hashed password in the response body.
++**NOTE:** The second `GET /token` request assumes a token was created by the previous `POST /token` request. Also, don't send the user's password or hashed password in the response body.
+ 
+-Additionally, ensure the `POST /session` middleware handles the following HTTP requests and sends back the associated HTTP response. The information in the request body uses the `application/json` content type while the information in the response body uses the `text/plain` content type.
++Additionally, ensure the `POST /token` middleware handles the following HTTP requests and sends back the associated HTTP response. The information in the request body uses the `application/json` content type while the information in the response body uses the `text/plain` content type.
+ 
+ | Request Method | Request URL        | Request Body                                                     | Response Status | Response Body                |
+ |----------------|--------------------|------------------------------------------------------------------|-----------------|------------------------------|
+-| `POST`         | `/session`         | `{ "email": "bad.email@gmail.com", "password": "youreawizard" }` | `400`           | `Bad email or password`      |
+-| `POST`         | `/session`         | `{ "email": "jkrowling@gmail.com", "password": "badpassword" }`  | `400`           | `Bad email or password`      |
++| `POST`         | `/token`         | `{ "email": "bad.email@gmail.com", "password": "youreawizard" }` | `400`           | `Bad email or password`      |
++| `POST`         | `/token`         | `{ "email": "jkrowling@gmail.com", "password": "badpassword" }`  | `400`           | `Bad email or password`      |
+ 
+ You can run the following test suite to verify the middleware works as expected.
+ 
+ ```shell
+-npm test test/part4.routes.session.test.js
++npm test test/part4.routes.token.test.js
+ ```
+ 
+ ## Authorization
+ 
+-In the `routes/favorites.js` module, add middleware to handle the following HTTP requests and send back the associated HTTP response. The information in both the request body and response body use the `application/json` content type. Assume a session has been created for a user with an `id` of `1`.
++In the `routes/favorites.js` module, add middleware to handle the following HTTP requests and send back the associated HTTP response. The information in both the request body and response body use the `application/json` content type. Assume a token has been created for a user with an `id` of `1`.
+ 
+ | Request Method | Request URL                 | Request Body       | Response Status | Response Body                                        |
+ |----------------|-----------------------------|--------------------|-----------------|------------------------------------------------------|
+@@ -72,7 +72,7 @@ In the `routes/favorites.js` module, add middleware to handle the following HTTP
+ | `POST`         | `/favorites`                | `{ "bookId": 2 } ` | `200`           | `{ "id": 2, "bookId": 2, "userId": 1, ... }`         |
+ | `DELETE`       | `/favorites`                | `{ "bookId": 1 }`  | `200`           | `{ "bookId": 1, "userId": 1, ... }`                  |
+ 
+-Additionally, ensure the middleware handles the following HTTP requests and sends back the associated HTTP response. The information in the request body uses the `application/json` content type while the information in the response body uses the `text/plain` content type. Assume no session has been created.
++Additionally, ensure the middleware handles the following HTTP requests and sends back the associated HTTP response. The information in the request body uses the `application/json` content type while the information in the response body uses the `text/plain` content type. Assume no token has been created.
+ 
+ | Request Method | Request URL                 | Request Body      | Response Status | Response Body     |
+ |----------------|-----------------------------|-------------------|-----------------|-------------------|
+@@ -112,24 +112,24 @@ Then, play around with the live application by logging in a user and viewing the
+ 
+ ## Bonus
+ 
+-In the `routes/session.js` module, update middleware to handle the following HTTP requests and send back the associated HTTP response. The information in the request body uses the `application/json` content type while the information in the response body uses the `text/plain` content type.
++In the `routes/token.js` module, update middleware to handle the following HTTP requests and send back the associated HTTP response. The information in the request body uses the `application/json` content type while the information in the response body uses the `text/plain` content type.
+ 
+ | Request Method | Request URL        | Request Body              | Response Status | Response Body                |
+ |----------------|--------------------|---------------------------|-----------------|------------------------------|
+-| `POST`         | `/session`         | `{ "email": "", ... }`    | `400`           | `Email must not be blank`    |
+-| `POST`         | `/session`         | `{ "password": "", ... }` | `400`           | `Password must not be blank` |
++| `POST`         | `/token`         | `{ "email": "", ... }`    | `400`           | `Email must not be blank`    |
++| `POST`         | `/token`         | `{ "password": "", ... }` | `400`           | `Password must not be blank` |
+ 
+ You can run the following test suite to verify the middleware works as expected.
+ 
+ ```shell
+-npm test test/part4.routes.session.bonus.test.js
++npm test test/part4.routes.token.bonus.test.js
+ ```
+ 
+ **NOTE:** Ensure the middleware handles the previous HTTP requests as before.
+ 
+ ## Bonus
+ 
+-In the `routes/favorites.js` module, update middleware to handle the following HTTP requests and send back the associated HTTP response. The information in the request body uses the `application/json` content type while the information in the response body uses the `text/plain` content type. Assume a session has been created for a user with an `id` of `1`.
++In the `routes/favorites.js` module, update middleware to handle the following HTTP requests and send back the associated HTTP response. The information in the request body uses the `application/json` content type while the information in the response body uses the `text/plain` content type. Assume a token has been created for a user with an `id` of `1`.
+ 
+ | Request Method | Request URL                   | Request Body          | Response Status | Response Body                |
+ |----------------|-------------------------------|-----------------------|-----------------|------------------------------|
+diff --git a/5_heroku_deployment.md b/5_heroku_deployment.md
+index 3079e8d..3453ee5 100644
+--- a/5_heroku_deployment.md
++++ b/5_heroku_deployment.md
+@@ -9,7 +9,7 @@ In this assignment, you'll deploy your database-driven application to Heroku.
+ First, complete the following pre-deployment steps.
+ 
+ 1. Create a Heroku app called `USERNAME-galvanize-bookshelf` where `USERNAME` is your GitHub username in lowercase form.
+-1. Generate a secret key to sign session information and set it to the `SESSION_SECRET` config variable of the new Heroku app.
++1. Generate a secret key to sign JWT information and set it to the `JWT_SECRET` config variable of the new Heroku app.
+ 1. Update the `package.json` file with a dependency to a specific Node.js version.
+ 1. Enable the Heroku PostgreSQL add-on for the new Heroku app.
+ 1. Update the `knexfile.js` file with the `production` database connection information.
+diff --git a/knexfile.js b/knexfile.js
+index fb3b59a..c7b47f4 100644
+--- a/knexfile.js
++++ b/knexfile.js
+@@ -7,7 +7,7 @@ module.exports = {
+   },
+   test: {
+     client: 'pg',
+-    connection: 'postgres://localhost/bookshelf_dev'
++    connection: 'postgres://localhost/bookshelf_test'
+ 
+   },
+   production: {
+diff --git a/migrations/20160930160123_books.js b/migrations/20160930160123_books.js
+index 94b8c3f..e6ff50a 100644
+--- a/migrations/20160930160123_books.js
++++ b/migrations/20160930160123_books.js
+@@ -1,3 +1,4 @@
++'use strict'
+ 
+ exports.up = function(knex, Promise) {
+   return knex.schema.createTable('books', (table) => {
+@@ -12,5 +13,5 @@ exports.up = function(knex, Promise) {
+ };
+ 
+ exports.down = function(knex, Promise) {
+-
++  return knex.schema.dropTable('books');
+ };
+diff --git a/package.json b/package.json
+index a1397f2..2368679 100644
+--- a/package.json
++++ b/package.json
+@@ -4,6 +4,7 @@
+   "description": "Create a web application to manage your book collection",
+   "main": "server.js",
+   "scripts": {
++    "heroku-postbuild": "knex migrate:latest",
+     "knex": "knex",
+     "lint": "eslint  --ignore-pattern public/js/vendor",
+     "nf": "nf start",
+@@ -12,22 +13,26 @@
+   },
+   "repository": {
+     "type": "git",
+-    "url": ""
++    "url": "git+https://github.com/gschool/galvanize-bookshelf.git"
+   },
+-  "author": "",
++  "author": "Ian Smith <ian.smith@galvanize.com>",
++  "contributors": [
++    "Ken McGrady <ken.mcgrady@galvanize.com>",
++    "Ryan Sobol <ryan.sobol@galvanize.com>"
++  ],
+   "license": "MIT",
+   "bugs": {
+-    "url": ""
++    "url": "https://github.com/gschool/galvanize-bookshelf/issues"
+   },
+-  "homepage": "",
++  "homepage": "https://github.com/gschool/galvanize-bookshelf#readme",
+   "dependencies": {
+     "bcrypt-as-promised": "^1.1.0",
+     "body-parser": "^1.15.2",
+     "boom": "^3.2.2",
+     "cookie-parser": "^1.4.3",
+-    "cookie-session": "^2.0.0-alpha.1",
+     "express": "^4.14.0",
+     "humps": "^1.1.0",
++    "jsonwebtoken": "^7.1.9",
+     "knex": "^0.11.7",
+     "morgan": "^1.7.0",
+     "pg": "^6.0.0"
+@@ -43,6 +48,6 @@
+     "supertest": "^1.2.0"
+   },
+   "engines": {
+-    "node": ""
++    "node": "6.3.1"
+   }
+ }
+diff --git a/public/js/book.js b/public/js/book.js
+index 88d76ec..0e99c9d 100644
+--- a/public/js/book.js
++++ b/public/js/book.js
+@@ -100,7 +100,7 @@
+       Materialize.toast('Unable to retrieve book', 3000);
+     });
+ 
+-  $.getJSON('/session')
++  $.getJSON('/token')
+     .done((isLoggedIn) => {
+       if (!isLoggedIn) {
+         return;
+diff --git a/public/js/login.js b/public/js/login.js
+index ceda2fd..c3071ca 100644
+--- a/public/js/login.js
++++ b/public/js/login.js
+@@ -22,7 +22,7 @@
+       data: JSON.stringify({ email, password }),
+       dataType: 'json',
+       type: 'POST',
+-      url: '/session'
++      url: '/token'
+     };
+ 
+     $.ajax(options)
+diff --git a/public/js/nav.js b/public/js/nav.js
+index c9107d2..b064d6e 100644
+--- a/public/js/nav.js
++++ b/public/js/nav.js
+@@ -3,7 +3,7 @@
+ 
+   $('.button-collapse').sideNav();
+ 
+-  $.getJSON('/session')
++  $.getJSON('/token')
+     .done((loggedIn) => {
+       const $firstNavItems = $('.firstNavItem');
+       const $secondNavItems = $('.secondNavItem');
+@@ -21,7 +21,7 @@
+           const options = {
+             dataType: 'json',
+             type: 'DELETE',
+-            url: '/session'
++            url: '/token'
+           };
+ 
+           $.ajax(options)
+diff --git a/routes/books.js b/routes/books.js
+index 43eabca..e4d80ff 100644
+--- a/routes/books.js
++++ b/routes/books.js
+@@ -1,10 +1,139 @@
+ 'use strict';
+ 
+ const express = require('express');
+-
+-// eslint-disable-next-line new-cap
+ const router = express.Router();
++const knex = require('../knex');
++
++const camelToSnake = function (obj){
++  for (camelkey in obj){}
++    let temp = camelkey.split();
++    temp.map(function(val, idx, arr){
++    if (val.charCodeAt() > 64 && val.charCodeAt() < 91){
++      val = "_" + String.fromCharCode(val.charCodeAt() + 32);
++    }
++
++    obj.temp = temp;
++    delete obj.camelkey
++  });
++  return obj
++};
++
++router.get('/books', (_req, res, next) => {
++  knex('books')
++    .orderBy('id')
++    .then((books) => {
++      res.send(books);
++    })
++    .catch((err) => {
++      next(err);
++    });
++});
++
++router.get('/books/:id', (req, res, next) => {
++    knex('books')
++    .where('id', req.params.id)
++    .first()
++    .then((books) => {
++      if (!books) {
++        return next();
++      }
++
++      res.send(books);
++    })
++    .catch((err) => {
++      next(err);
++    });
++});
++
++router.post('/books', (req, res, next) => {
++  knex('books')
++    .insert({
++      title: req.body.title,
++      author: req.body.author,
++      genre: req.body.genre,
++      description: req.body.description,
++      cover_url: req.body.cover_url
++    }, '*')
++    .then((books) => {
++      res.send(books[0]);
++    })
++    .catch((err) => {
++      next(err);
++    });
++});
++
++router.patch('/books/:id', (req, res, next) => {
++  knex('books')
++    .where('id', req.params.id)
++    .first()
++    .then((book) => {
++      if (!book){
++        return next();
++      };
++
++      if (req.body.title){
++        knex('books')
++            .update({ title: req.body.title }, '*')
++            .where('id', req.params.id);
++      };
++
++      if (req.body.author){
++        knex('books')
++            .update({ author: req.body.author }, '*')
++            .where('id', req.params.id);
++      };
++
++      if (req.body.genre){
++        knex('books')
++            .update({ genre: req.body.genre }, '*')
++            .where('id', req.params.id);
++      };
++
++      if (req.body.description){
++        knex('books')
++            .update({ description: req.body.description }, '*')
++            .where('id', req.params.id);
++      };
++
++      if (req.body.cover_url){
++        knex('books')
++            .update({ cover_url: req.body.cover_url }, '*')
++            .where('id', req.params.id);
++      };
++
++    })
++    .then((books) => {
++      res.send(books);
++    })
++    .catch((err) => {
++      next(err);
++    });
++});
++
++router.delete('/books/:id', (req, res, next) => {
++  let book;
++
++  knex('books')
++    .where('id', req.params.id)
++    .first()
++    .then((row) => {
++      if (!row) {
++        return next();
++      }
++
++      book = row;
+ 
+-// YOUR CODE HERE
++      return knex('book')
++        .del()
++        .where('id', req.params.id);
++    })
++    .then(() => {
++      delete book.id;
++      res.send(book);
++    })
++    .catch((err) => {
++      next(err);
++    });
++});
+ 
+ module.exports = router;
+diff --git a/routes/session.js b/routes/session.js
+deleted file mode 100644
+index 43eabca..0000000
+--- a/routes/session.js
++++ /dev/null
+@@ -1,10 +0,0 @@
+-'use strict';
+-
+-const express = require('express');
+-
+-// eslint-disable-next-line new-cap
+-const router = express.Router();
+-
+-// YOUR CODE HERE
+-
+-module.exports = router;
+diff --git a/routes/token.js b/routes/token.js
+new file mode 100644
+index 0000000..43eabca
+--- /dev/null
++++ b/routes/token.js
+@@ -0,0 +1,10 @@
++'use strict';
++
++const express = require('express');
++
++// eslint-disable-next-line new-cap
++const router = express.Router();
++
++// YOUR CODE HERE
++
++module.exports = router;
+diff --git a/seeds/1_books.js b/seeds/1_books.js
+index f0ff7d9..f1b277e 100644
+--- a/seeds/1_books.js
++++ b/seeds/1_books.js
+@@ -77,5 +77,10 @@ exports.seed = (knex) => {
+         created_at: new Date('2016-06-26 14:26:16 UTC'),
+         updated_at: new Date('2016-06-26 14:26:16 UTC')
+       }]);
++    })
++    .then(() => {
++      return knex.raw(
++        "SELECT setval('books_id_seq', (SELECT MAX(id) FROM books));"
++      );
+     });
+ };
+diff --git a/server.js b/server.js
+index 7afbb1f..e142cc4 100644
+--- a/server.js
++++ b/server.js
+@@ -10,7 +10,7 @@ const app = express();
+ app.disable('x-powered-by');
+ 
+ const bodyParser = require('body-parser');
+-const cookieSession = require('cookie-session');
++const cookieParser = require('cookie-parser')
+ const morgan = require('morgan');
+ 
+ switch (app.get('env')) {
+@@ -26,11 +26,7 @@ switch (app.get('env')) {
+ }
+ 
+ app.use(bodyParser.json());
+-app.use(cookieSession({
+-  name: 'bookshelf',
+-  secret: process.env.SESSION_SECRET,
+-  secureProxy: app.get('env') === 'production'
+-}));
++app.use(cookieParser());
+ 
+ const path = require('path');
+ 
+@@ -47,14 +43,15 @@ app.use((req, res, next) => {
+ 
+ const books = require('./routes/books');
+ const favorites = require('./routes/favorites');
+-const session = require('./routes/session');
++const token = require('./routes/token');
+ const users = require('./routes/users');
+ 
+ app.use(books);
+ app.use(favorites);
+-app.use(session);
++app.use(token);
+ app.use(users);
+ 
++
+ app.use((_req, res) => {
+   res.sendStatus(404);
+ });
+diff --git a/test/part2.routes.test.js b/test/part2.routes.test.js
+index 09004be..2976519 100644
+--- a/test/part2.routes.test.js
++++ b/test/part2.routes.test.js
+@@ -172,7 +172,7 @@ suite('part2 routes', () => {
+         description: 'More Python',
+         coverUrl: 'https://s3-us-west-2.amazonaws.com/assessment-images/galvanize_reads/photos/think_python.jpg'
+       })
+-      .expect('Content-Type', /json/)
++      // .expect('Content-Type', /json/)
+       .expect((res) => {
+         delete res.body.createdAt;
+         delete res.body.updatedAt;
+@@ -194,7 +194,7 @@ suite('part2 routes', () => {
+     request(server)
+       .del('/books/1')
+       .set('Accept', 'application/json')
+-      .expect('Content-Type', /json/)
++      // .expect('Content-Type', /json/)
+       .expect((res) => {
+         delete res.body.createdAt;
+         delete res.body.updatedAt;
+diff --git a/test/part4.routes.favorites.bonus.test.js b/test/part4.routes.favorites.bonus.test.js
+index 5b1b876..ed918fb 100644
+--- a/test/part4.routes.favorites.bonus.test.js
++++ b/test/part4.routes.favorites.bonus.test.js
+@@ -24,7 +24,7 @@ suite('part4 routes favorites bonus', () => {
+     knex.seed.run()
+       .then(() => {
+         request(server)
+-          .post('/session')
++          .post('/token')
+           .set('Accept', 'application/json')
+           .set('Content-Type', 'application/json')
+           .send({
+diff --git a/test/part4.routes.favorites.test.js b/test/part4.routes.favorites.test.js
+index c0dff66..3bef4d9 100644
+--- a/test/part4.routes.favorites.test.js
++++ b/test/part4.routes.favorites.test.js
+@@ -20,14 +20,14 @@ suite('part4 routes favorites', () => {
+       });
+   });
+ 
+-  suite('with session', () => {
++  suite('with token', () => {
+     const agent = request.agent(server);
+ 
+     beforeEach((done) => {
+       knex.seed.run()
+         .then(() => {
+           request(server)
+-            .post('/session')
++            .post('/token')
+             .set('Accept', 'application/json')
+             .set('Content-Type', 'application/json')
+             .send({
+@@ -114,7 +114,7 @@ suite('part4 routes favorites', () => {
+     });
+   });
+ 
+-  suite('without session', () => {
++  suite('without token', () => {
+     before((done) => {
+       knex.migrate.latest()
+         .then(() => {
+diff --git a/test/part4.routes.session.bonus.test.js b/test/part4.routes.session.bonus.test.js
+deleted file mode 100644
+index ea81eed..0000000
+--- a/test/part4.routes.session.bonus.test.js
++++ /dev/null
+@@ -1,54 +0,0 @@
+-'use strict';
+-
+-process.env.NODE_ENV = 'test';
+-
+-const { suite, test } = require('mocha');
+-const request = require('supertest');
+-const knex = require('../knex');
+-const server = require('../server');
+-
+-suite('part4 routes session bonus', () => {
+-  before((done) => {
+-    knex.migrate.latest()
+-      .then(() => {
+-        done();
+-      })
+-      .catch((err) => {
+-        done(err);
+-      });
+-  });
+-
+-  beforeEach((done) => {
+-    knex.seed.run()
+-      .then(() => {
+-        done();
+-      })
+-      .catch((err) => {
+-        done(err);
+-      });
+-  });
+-
+-  test('POST /session with no email', (done) => {
+-    request(server)
+-      .post('/session')
+-      .set('Accept', 'application/json')
+-      .set('Content-Type', 'application/json')
+-      .send({
+-        password: 'youreawizard'
+-      })
+-      .expect('Content-Type', /plain/)
+-      .expect(400, 'Email must not be blank', done);
+-  });
+-
+-  test('POST /session with no password', (done) => {
+-    request(server)
+-      .post('/session')
+-      .set('Accept', 'application/json')
+-      .set('Content-Type', 'application/json')
+-      .send({
+-        email: 'jkrowling@gmail.com'
+-      })
+-      .expect('Content-Type', /plain/)
+-      .expect(400, 'Password must not be blank', done);
+-  });
+-});
+diff --git a/test/part4.routes.session.test.js b/test/part4.routes.session.test.js
+deleted file mode 100644
+index 4db7704..0000000
+--- a/test/part4.routes.session.test.js
++++ /dev/null
+@@ -1,124 +0,0 @@
+-'use strict';
+-
+-process.env.NODE_ENV = 'test';
+-
+-const { suite, test } = require('mocha');
+-const request = require('supertest');
+-const knex = require('../knex');
+-const server = require('../server');
+-
+-suite('part4 routes session', () => {
+-  before((done) => {
+-    knex.migrate.latest()
+-      .then(() => {
+-        done();
+-      })
+-      .catch((err) => {
+-        done(err);
+-      });
+-  });
+-
+-  beforeEach((done) => {
+-    knex.seed.run()
+-      .then(() => {
+-        done();
+-      })
+-      .catch((err) => {
+-        done(err);
+-      });
+-  });
+-
+-  test('GET /session without session', (done) => {
+-    request(server)
+-      .get('/session')
+-      .set('Accept', 'application/json')
+-      .expect('Content-Type', /json/)
+-      .expect(200, 'false', done);
+-  });
+-
+-  test('POST /session', (done) => {
+-    request(server)
+-      .post('/session')
+-      .set('Accept', 'application/json')
+-      .set('Content-Type', 'application/json')
+-      .send({
+-        email: 'jkrowling@gmail.com',
+-        password: 'youreawizard'
+-      })
+-      .expect('set-cookie', /bookshelf=[a-zA-Z0-9=]*; path=\//)
+-      .expect('set-cookie', /bookshelf.sig=[a-zA-Z0-9=\-_]*; path=\//)
+-      .expect('Content-Type', /json/)
+-      .expect((res) => {
+-        delete res.body.createdAt;
+-        delete res.body.updatedAt;
+-      })
+-      .expect(200, {
+-        id: 1,
+-        firstName: 'Joanne',
+-        lastName: 'Rowling',
+-        email: 'jkrowling@gmail.com'
+-      }, done);
+-  });
+-
+-  test('GET /session with session', (done) => {
+-    const agent = request.agent(server);
+-
+-    request(server)
+-      .post('/session')
+-      .set('Accept', 'application/json')
+-      .set('Content-Type', 'application/json')
+-      .send({
+-        email: 'jkrowling@gmail.com',
+-        password: 'youreawizard'
+-      })
+-      .end((err, res) => {
+-        if (err) {
+-          return done(err);
+-        }
+-
+-        agent.saveCookies(res);
+-
+-        agent
+-          .get('/session')
+-          .set('Accept', 'application/json')
+-          .expect('Content-Type', /json/)
+-          .expect(200, 'true', done);
+-      });
+-  });
+-
+-  test('DELETE /session', (done) => {
+-    request(server)
+-      .del('/session')
+-      .set('Accept', 'application/json')
+-      .expect('set-cookie', /bookshelf=; path=\//)
+-      .expect('set-cookie', /bookshelf.sig=[a-zA-Z0-9=\-_]*; path=\//)
+-      .expect('Content-Type', /json/)
+-      .expect(200, 'true', done);
+-  });
+-
+-  test('POST /session with bad email', (done) => {
+-    request(server)
+-      .post('/session')
+-      .set('Accept', 'application/json')
+-      .set('Content-Type', 'application/json')
+-      .send({
+-        email: 'bad.email@gmail.com',
+-        password: 'youreawizard'
+-      })
+-      .expect('Content-Type', /plain/)
+-      .expect(400, 'Bad email or password', done);
+-  });
+-
+-  test('POST /session with bad password', (done) => {
+-    request(server)
+-      .post('/session')
+-      .set('Accept', 'application/json')
+-      .set('Content-Type', 'application/json')
+-      .send({
+-        email: 'jkrowling@gmail.com',
+-        password: 'badpassword'
+-      })
+-      .expect('Content-Type', /plain/)
+-      .expect(400, 'Bad email or password', done);
+-  });
+-});
+diff --git a/test/part4.routes.token.bonus.test.js b/test/part4.routes.token.bonus.test.js
+new file mode 100644
+index 0000000..a911c75
+--- /dev/null
++++ b/test/part4.routes.token.bonus.test.js
+@@ -0,0 +1,54 @@
++'use strict';
++
++process.env.NODE_ENV = 'test';
++
++const { suite, test } = require('mocha');
++const request = require('supertest');
++const knex = require('../knex');
++const server = require('../server');
++
++suite('part4 routes token bonus', () => {
++  before((done) => {
++    knex.migrate.latest()
++      .then(() => {
++        done();
++      })
++      .catch((err) => {
++        done(err);
++      });
++  });
++
++  beforeEach((done) => {
++    knex.seed.run()
++      .then(() => {
++        done();
++      })
++      .catch((err) => {
++        done(err);
++      });
++  });
++
++  test('POST /token with no email', (done) => {
++    request(server)
++      .post('/token')
++      .set('Accept', 'application/json')
++      .set('Content-Type', 'application/json')
++      .send({
++        password: 'youreawizard'
++      })
++      .expect('Content-Type', /plain/)
++      .expect(400, 'Email must not be blank', done);
++  });
++
++  test('POST /token with no password', (done) => {
++    request(server)
++      .post('/token')
++      .set('Accept', 'application/json')
++      .set('Content-Type', 'application/json')
++      .send({
++        email: 'jkrowling@gmail.com'
++      })
++      .expect('Content-Type', /plain/)
++      .expect(400, 'Password must not be blank', done);
++  });
++});
+diff --git a/test/part4.routes.token.test.js b/test/part4.routes.token.test.js
+new file mode 100644
+index 0000000..34029fb
+--- /dev/null
++++ b/test/part4.routes.token.test.js
+@@ -0,0 +1,122 @@
++'use strict';
++
++process.env.NODE_ENV = 'test';
++
++const { suite, test } = require('mocha');
++const request = require('supertest');
++const knex = require('../knex');
++const server = require('../server');
++
++suite('part4 routes token', () => {
++  before((done) => {
++    knex.migrate.latest()
++      .then(() => {
++        done();
++      })
++      .catch((err) => {
++        done(err);
++      });
++  });
++
++  beforeEach((done) => {
++    knex.seed.run()
++      .then(() => {
++        done();
++      })
++      .catch((err) => {
++        done(err);
++      });
++  });
++
++  test('GET /token without token', (done) => {
++    request(server)
++      .get('/token')
++      .set('Accept', 'application/json')
++      .expect('Content-Type', /json/)
++      .expect(200, 'false', done);
++  });
++
++  test('POST /token', (done) => {
++    request(server)
++      .post('/token')
++      .set('Accept', 'application/json')
++      .set('Content-Type', 'application/json')
++      .send({
++        email: 'jkrowling@gmail.com',
++        password: 'youreawizard'
++      })
++      .expect('set-cookie', /accessToken=[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+; Path=\/;.+HttpOnly/)
++      .expect('Content-Type', /json/)
++      .expect((res) => {
++        delete res.body.createdAt;
++        delete res.body.updatedAt;
++      })
++      .expect(200, {
++        id: 1,
++        firstName: 'Joanne',
++        lastName: 'Rowling',
++        email: 'jkrowling@gmail.com'
++      }, done);
++  });
++
++  test('GET /token with token', (done) => {
++    const agent = request.agent(server);
++
++    request(server)
++      .post('/token')
++      .set('Accept', 'application/json')
++      .set('Content-Type', 'application/json')
++      .send({
++        email: 'jkrowling@gmail.com',
++        password: 'youreawizard'
++      })
++      .end((err, res) => {
++        if (err) {
++          return done(err);
++        }
++
++        agent.saveCookies(res);
++
++        agent
++          .get('/token')
++          .set('Accept', 'application/json')
++          .expect('Content-Type', /json/)
++          .expect(200, 'true', done);
++      });
++  });
++
++  test('DELETE /token', (done) => {
++    request(server)
++      .del('/token')
++      .set('Accept', 'application/json')
++      .expect('set-cookie', /accessToken=; Path=\//)
++      .expect('Content-Type', /json/)
++      .expect(200, 'true', done);
++  });
++
++  test('POST /token with bad email', (done) => {
++    request(server)
++      .post('/token')
++      .set('Accept', 'application/json')
++      .set('Content-Type', 'application/json')
++      .send({
++        email: 'bad.email@gmail.com',
++        password: 'youreawizard'
++      })
++      .expect('Content-Type', /plain/)
++      .expect(400, 'Bad email or password', done);
++  });
++
++  test('POST /token with bad password', (done) => {
++    request(server)
++      .post('/token')
++      .set('Accept', 'application/json')
++      .set('Content-Type', 'application/json')
++      .send({
++        email: 'jkrowling@gmail.com',
++        password: 'badpassword'
++      })
++      .expect('Content-Type', /plain/)
++      .expect(400, 'Bad email or password', done);
++  });
++});
