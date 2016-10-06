@@ -21,11 +21,6 @@ const app = express();
 
 app.disable('x-powered-by');
 
-app.use(bodyParser.json());
-app.use(cookieParser());
-
-app.use(express.static(path.join('public')));
-
 switch (app.get('env')) {
   case 'development':
     app.use(morgan('dev'));
@@ -38,10 +33,10 @@ switch (app.get('env')) {
   default:
 }
 
-app.use(books);
-app.use(favorites);
-app.use(token);
-app.use(users);
+app.use(bodyParser.json());
+app.use(cookieParser());
+
+app.use(express.static(path.join('public')));
 
 // CSRF protection
 app.use((req, res, next) => {
@@ -52,10 +47,14 @@ app.use((req, res, next) => {
   res.sendStatus(406);
 });
 
+app.use(books);
+app.use(favorites);
+app.use(token);
+app.use(users);
 
 app.use((_req, res) => {
   res.sendStatus(404);
-});
+})
 
 // eslint-disable-next-line max-params
 app.use((err, _req, res, _next) => {
