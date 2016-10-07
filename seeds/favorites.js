@@ -1,3 +1,8 @@
+/* eslint-disable camelcase */
+/* eslint-disable max-len */
+/* eslint-disable brace-style */
+/* eslint-disable no-unused-vars */
+
 'use strict';
 
 exports.seed = function(knex) {
@@ -17,4 +22,4 @@ exports.seed = function(knex) {
       "SELECT setval('favorites_id_seq', (SELECT MAX(id) FROM users));"
     );
   });
-}
+};

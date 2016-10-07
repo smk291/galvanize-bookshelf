@@ -1,17 +1,17 @@
 'use strict';
 
-exports.up = function(knex, Promise) {
-  return knex.schema.createTable('books', (t) => {
-    t.increments();
-    t.string('title').notNullable().defaultTo('');
-    t.string('author').notNullable().defaultTo('');
-    t.string('genre').notNullable().defaultTo('');
-    t.text('description').notNullable().defaultTo('');
-    t.text('cover_url').notNullable().defaultTo('');
-    t.timestamps(true, true);
+exports.up = function(knex) {
+  return knex.schema.createTable('books', (ta) => {
+    ta.increments();
+    ta.string('title').notNullable().defaultTo('');
+    ta.string('author').notNullable().defaultTo('');
+    ta.string('genre').notNullable().defaultTo('');
+    ta.text('description').notNullable().defaultTo('');
+    ta.text('cover_url').notNullable().defaultTo('');
+    ta.timestamps(true, true);
   });
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function(knex) {
   return knex.schema.dropTable('books');
 };

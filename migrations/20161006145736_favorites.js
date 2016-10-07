@@ -1,23 +1,23 @@
 'use strict';
 
 exports.up = function(knex) {
-  return knex.schema.createTable('favorites', (t) => {
-    t.increments();
-    t.integer('book_id')
+  return knex.schema.createTable('favorites', (ta) => {
+    ta.increments();
+    ta.integer('book_id')
       .unsigned()
       .references('id')
       .inTable('books')
       .notNullable()
       .onDelete('CASCADE')
       .index();
-    t.integer('user_id')
+    ta.integer('user_id')
       .unsigned()
       .references('id')
       .inTable('users')
       .notNullable()
       .onDelete('CASCADE')
       .index();
-    t.timestamps(true, true);
+    ta.timestamps(true, true);
   });
 };
 

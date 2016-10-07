@@ -1,3 +1,10 @@
+/* eslint-disable camelcase */
+/* eslint-disable max-len */
+/* eslint-disable brace-style */
+/* eslint-disable no-unused-vars */
+/* eslint-disable new-cap */
+/* eslint-disable no-negated-condition */
+
 'use strict';
 
 const boom = require('boom');
@@ -14,14 +21,10 @@ const authorize = function(req, res, next) {
     if (err) {
       res.verify = false;
     } else {
-      res.verify = true
+      res.verify = true;
     }
 
-// console.log(req.cookies.token)
-// console.log(process.env.JWT_SECRET);
-// console.log(decoded);
-
-  next();
+    next();
   });
 };
 
@@ -64,6 +67,7 @@ router.post('/token', (req, res, next) => {
       delete user.hashedPassword;
 
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+
       res.cookie('token', token, {
         httpOnly: true,
         secure: router.get('env') === 'production'

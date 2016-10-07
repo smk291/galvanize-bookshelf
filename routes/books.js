@@ -1,3 +1,10 @@
+/* eslint-disable camelcase */
+/* eslint-disable max-len */
+/* eslint-disable brace-style */
+/* eslint-disable no-unused-vars */
+/* eslint-disable new-cap */
+/* eslint-disable no-negated-condition */
+
 'use strict';
 
 const boom = require('boom');
@@ -16,9 +23,8 @@ router.get('/books', (_req, res, next) => {
 });
 
 router.get('/books/:id', (req, res, next) => {
-  if (!(Number(req.params.id))){
+  if (!(Number(req.params.id))) {
     return next();
-    // throw boom.create(404, 'Not Found');
   }
 
   knex('books')
@@ -30,30 +36,31 @@ router.get('/books/:id', (req, res, next) => {
         throw boom.create(404, 'Not Found');
       }
 
-    res.send(camelizeKeys(book));
-  }).catch((err) => {
-    next(err);
-  });
+      res.send(camelizeKeys(book));
+    })
+    .catch((err) => {
+      next(err);
+    });
 });
 
 router.post('/books', (req, res, next) => {
-  if (!(req.body.title) || !(req.body.title.trim())){
+  if (!(req.body.title) || !(req.body.title.trim())) {
     throw boom.create(400, 'Title must not be blank');
   }
 
-  if (!(req.body.author) || !(req.body.author.trim())){
+  if (!(req.body.author) || !(req.body.author.trim())) {
     throw boom.create(400, 'Author must not be blank');
   }
 
-  if (!(req.body.genre) || !(req.body.genre.trim())){
+  if (!(req.body.genre) || !(req.body.genre.trim())) {
     throw boom.create(400, 'Genre must not be blank');
   }
 
-  if (!(req.body.description) || !(req.body.description.trim())){
+  if (!(req.body.description) || !(req.body.description.trim())) {
     throw boom.create(400, 'Description must not be blank');
   }
 
-  if (!(req.body.coverUrl) || !(req.body.coverUrl.trim())){
+  if (!(req.body.coverUrl) || !(req.body.coverUrl.trim())) {
     throw boom.create(400, 'Cover URL must not be blank');
   }
 
@@ -63,7 +70,7 @@ router.post('/books', (req, res, next) => {
     author: req.body.author,
     genre: req.body.genre,
     description: req.body.description,
-    cover_url: req.body.coverUrl,
+    cover_url: req.body.coverUrl
   }, '*').then((books) => {
     res.send(camelizeKeys(books[0]));
   }).catch((err) => {
@@ -71,11 +78,9 @@ router.post('/books', (req, res, next) => {
   });
 });
 
-
 router.patch('/books/:id', (req, res, next) => {
-  if (!(Number(req.params.id))){
+  if (!(Number(req.params.id))) {
     return next();
-    // throw boom.create(404, 'Not Found');
   }
 
   knex('books')
@@ -124,7 +129,7 @@ router.patch('/books/:id', (req, res, next) => {
 });
 
 router.delete('/books/:id', (req, res, next) => {
-  if (!(Number(req.params.id))){
+  if (!(Number(req.params.id))) {
     throw boom.create(404, 'Not Found');
   }
 

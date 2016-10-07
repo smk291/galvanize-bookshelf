@@ -1,4 +1,7 @@
 /* eslint-disable camelcase */
+/* eslint-disable max-len */
+/* eslint-disable brace-style */
+/* eslint-disable no-unused-vars */
 
 'use strict';
 
