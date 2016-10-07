@@ -18,10 +18,43 @@ const authorize = function(req, res, next) {
 
     res.verify = true;
     req.token = decoded;
-    // You can now access the payload via req.token.userId
+
     next();
   });
 };
+
+
+router.delete('/favorites', authorize, (req, res, next) => {
+  let favorite;
+  const { userId } = req.token;
+  const { bookId } = req.body;
+
+
+    if (typeof bookId !== 'number'){
+      return next(boom.create(400, 'Book ID must be an integer'));
+    }
+
+    knex('favorites')
+      .where({'book_id': bookId, 'user_id': userId})
+      .first()
+      .then((row) =>{
+        if (!row){
+          throw next(boom.create(404, 'Favorite not found'));
+        }
+            favorite = camelizeKeys(row);
+
+            return knex('favorites')
+              .where({'book_id': bookId, 'user_id': userId})
+              .del();
+          })
+          .then(() => {
+            delete favorite.id;
+            res.send(favorite);
+          })
+          .catch((err) => {
+            next(err);
+          })
+        })
 
 router.get('/favorites', authorize, (req, res, next) => {
   const { userId } = req.token;
@@ -29,10 +62,10 @@ router.get('/favorites', authorize, (req, res, next) => {
   knex('favorites')
     .innerJoin('books', 'books.id', 'favorites.book_id')
     .where('favorites.user_id', userId)
-    .then((rows) => {
-      const favorites = camelizeKeys(rows);
+    .then((row) => {
+      const favorite = camelizeKeys(row);
 
-      res.send(favorites);
+      res.send(favorite);
     })
     .catch((err) => {
       next(err);
@@ -41,51 +74,16 @@ router.get('/favorites', authorize, (req, res, next) => {
 
 router.get('/favorites/check', authorize, (req, res, next) => {
   const { userId } = req.token;
+  const bookId = Number(req.query.bookId);
 
-
-  const bookId = req.query.bookId;
-
-  // const { id } = req.params;
-  // console.log("ID IS "  + id);
-  // console.log(req.params.id);
-  // if no token, throw error '401 unauthorized'
-
-  // if token and request for nonexistent entry
-    // return false
-
-  // if token and request for extant entry
-    // return true
-
-    // with token
-    //   ✓ GET /favorites
-    //   1) GET /favorites/check?bookId=1
-    //   2) GET /favorites/check?bookId=2
-    //   3) POST /favorites
-    //   4) DELETE /favorites
-    // without token
-    //   ✓ GET /favorites
-    //   5) GET /favorites/check?bookId=1
-    //   6) GET /favorites/check?bookId=2
-    //   7) POST /favorites
-    //   8) DELETE /favorites
-
-    // part4 routes favorites bonus
-    //   1) GET /favorites/check?bookId=one
-    //   2) POST /favorites with non-integer bookId
-    //   3) POST /favorites with unknown bookId
-    //   4) DELETE /favorites with non-integer bookId
-    //   5) DELETE /favorites with unknown favorite
-
-
-  if (!userId || userId.length === 0){
-    throw boom.create(401, 'Unauthorized')
+  if (isNaN(bookId)){
+      return next(boom.create(400, 'Book ID must be an integer'));
   }
 
   knex('favorites')
     .where('id', bookId)
     .first()
     .then((row) => {
-      // console.log(row);
       if(!row){
         res.status(200);
         res.send('false');
@@ -93,28 +91,56 @@ router.get('/favorites/check', authorize, (req, res, next) => {
         res.status(200);
         res.send('true');
       }
+    })
+    .catch((err) =>{
+      next(err);
     });
 });
 
+router.post('/favorites', authorize, (req, res, next) => {
+  const { userId } = req.token;
+  const { bookId } = req.body;
+
+  if (typeof req.body.bookId !== 'number'){
+    return next(boom.create(400, 'Book ID must be an integer'));
+  }
+
+  knex('books')
+    .where('id', bookId)
+    .first()
+    .then((row) => {
+      if (!row){
+        return next(boom.create(404, 'Book not found'));
+      }
+
+      return knex('favorites')
+        .insert({
+            user_id: userId,
+            book_id: bookId
+        }, '*');
+    })
+    .then((rows) => {
+      const favorite = camelizeKeys(rows[0])
+
+      res.send(favorite);
+    })
+    .catch((err) => {
+      next(err);
+    });
+
+    // .then(() => {
+    //   knex('favorites')
+    //     .where('book_id', bookId)
+    //     .first()
+    //     .then((row) => {
+    //       if (!row || row.length === 0){
+    //         throw next(boom.create(404, 'Book not found'));
+    //       }
+    //       res.send(camelizeKeys(row));
+    //     });
+    // });
+
+})
+// });
+
 module.exports = router;
-
-
-// with token
-//   ✓ GET /favorites
-//   1) GET /favorites/check?bookId=1
-//   2) GET /favorites/check?bookId=2
-//   3) POST /favorites
-//   4) DELETE /favorites
-// without token
-//   ✓ GET /favorites
-//   5) GET /favorites/check?bookId=1
-//   6) GET /favorites/check?bookId=2
-//   7) POST /favorites
-//   8) DELETE /favorites
-
-// part4 routes favorites bonus
-//   1) GET /favorites/check?bookId=one
-//   2) POST /favorites with non-integer bookId
-//   3) POST /favorites with unknown bookId
-//   4) DELETE /favorites with non-integer bookId
-//   5) DELETE /favorites with unknown favorite
