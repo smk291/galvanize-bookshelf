@@ -16,6 +16,11 @@ const authorize = function(req, res, next) {
     } else {
       res.verify = true
     }
+
+// console.log(req.cookies.token)
+// console.log(process.env.JWT_SECRET);
+// console.log(decoded);
+
   next();
   });
 };
