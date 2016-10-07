@@ -9,11 +9,25 @@ const { camelizeKeys, decamelizeKeys } = require('humps');
 
 const router = express.Router();
 
-router.get('/token', (req, res, next) => {
-  if(!req.body.email || !req.body.password){
-    res.set({ 'content-type': 'application/json; charset=utf-8' })
-    res.status(200).send('false');
-  }
+const authorize = function(req, res, next) {
+  jwt.verify(req.cookies.token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      res.verify = false;
+    } else {
+      res.verify = true
+    }
+  next();
+  });
+};
+
+router.delete('/token', (req, res, next) => {
+  res.clearCookie('token');
+  res.status(200);
+  res.send('true');
+});
+
+router.get('/token', authorize, (req, res, next) => {
+  res.send(res.verify);
 });
 
 router.post('/token', (req, res, next) => {
@@ -58,12 +72,6 @@ router.post('/token', (req, res, next) => {
     .catch((err) => {
       next(err);
     });
-});
-
-
-router.delete('/token', (req, res, next) => {
-  res.clearCookie('token');
-  res.sendStatus(200);
 });
 
 module.exports = router;

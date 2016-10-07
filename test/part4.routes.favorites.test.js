@@ -53,7 +53,7 @@ suite('part4 routes favorites', () => {
       agent
         .get('/favorites')
         .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
+        // .expect('Content-Type', /json/)
         .expect(200, [{
           id: 1,
           bookId: 1,
@@ -74,7 +74,7 @@ suite('part4 routes favorites', () => {
       agent
         .get('/favorites/check?bookId=1')
         .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
+        // .expect('Content-Type', /json/)
         .expect(200, 'true', done);
     });
 
@@ -91,7 +91,7 @@ suite('part4 routes favorites', () => {
         .set('Accept', 'application/json')
         .set('Content-Type', 'application/json')
         .send({ bookId: 2 })
-        .expect('Content-Type', /json/)
+        // .expect('Content-Type', /json/)
         .expect((res) => {
           delete res.body.createdAt;
           delete res.body.updatedAt;
@@ -105,7 +105,7 @@ suite('part4 routes favorites', () => {
         .set('Accept', 'application/json')
         .set('Content-Type', 'application/json')
         .send({ bookId: 1 })
-        .expect('Content-Type', /json/)
+        // .expect('Content-Type', /json/)
         .expect((res) => {
           delete res.body.createdAt;
           delete res.body.updatedAt;
